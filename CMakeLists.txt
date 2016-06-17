@@ -6,8 +6,6 @@ else()
 ENABLE_LANGUAGE(ASM)
 endif()
 
-set(BOOST_LIBRARIES boost_static_libs PARENT_SCOPE)
-
 set(BOOST_REGEX_SRC
 	libs/regex/src/regex.cpp
 	libs/regex/src/regex_traits_defaults.cpp
@@ -205,18 +203,27 @@ set(BOOST_TIMER_SRC
 set(BOOST_RANDOM_SRC libs/random/src/random_device.cpp)
 
 set(BOOST_SRCS ${BOOST_SYSTEM_SRC} ${BOOST_THREAD_SRC} ${BOOST_CHRONO_SRC} ${BOOST_REGEX_SRC} ${BOOST_CONTEXT_SRC}
-	${BOOST_COROUTINE_SRC} ${BOOST_DATE_TIME_SRC} ${BOOST_EXCEPTION_SRC} ${BOOST_FILESYSTEM_SRC}
+	${BOOST_COROUTINE_SRC} ${BOOST_DATE_TIME_SRC} ${BOOST_EXCEPTION_SRC}
 	${BOOST_LOCALE_SRC} ${BOOST_PROGRAM_OPTIONS_SRC} ${BOOST_TIMER_SRC} ${BOOST_RANDOM_SRC})
 
 add_library(boost_static_libs STATIC ${BOOST_SRCS})
 
+ADD_LIBRARY(boost_filesystem_static STATIC ${BOOST_FILESYSTEM_SRC})
+
 target_include_directories(boost_static_libs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(boost_filesystem_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_definitions(boost_static_libs PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
+target_compile_definitions(boost_filesystem_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
 
 target_compile_definitions(boost_static_libs PRIVATE -DBOOST_THREAD_BUILD_LIB)
 
 if(WIN32)
-	target_compile_definitions(boost_static_libs PUBLIC -DWIN32_LEAN_AND_MEAN)
-	target_compile_definitions(boost_static_libs PUBLIC -DNOMINMAX)
+	target_compile_definitions(boost_static_libs PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+	target_compile_definitions(boost_filesystem_static PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
 endif()
+
+set(BOOST_LIBRARIES boost_filesystem_static boost_static_libs PARENT_SCOPE)
+
+set_target_properties(boost_static_libs PROPERTIES FOLDER "third_party")
+set_target_properties(boost_filesystem_static PROPERTIES FOLDER "third_party")

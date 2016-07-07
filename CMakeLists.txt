@@ -6,6 +6,8 @@ else()
 ENABLE_LANGUAGE(ASM)
 endif()
 
+SET(BOOST_ATOMIC_SRC libs/atomic/src/lockpool.cpp)
+
 set(BOOST_REGEX_SRC
 	libs/regex/src/regex.cpp
 	libs/regex/src/regex_traits_defaults.cpp
@@ -202,28 +204,65 @@ set(BOOST_TIMER_SRC
 
 set(BOOST_RANDOM_SRC libs/random/src/random_device.cpp)
 
-set(BOOST_SRCS ${BOOST_SYSTEM_SRC} ${BOOST_THREAD_SRC} ${BOOST_CHRONO_SRC} ${BOOST_REGEX_SRC} ${BOOST_CONTEXT_SRC}
-	${BOOST_COROUTINE_SRC} ${BOOST_DATE_TIME_SRC} ${BOOST_EXCEPTION_SRC}
-	${BOOST_LOCALE_SRC} ${BOOST_PROGRAM_OPTIONS_SRC} ${BOOST_TIMER_SRC} ${BOOST_RANDOM_SRC})
+set(BOOST_SRCS ${BOOST_ATOMIC_SRC})
 
-add_library(boost_static_libs STATIC ${BOOST_SRCS})
+add_library(boost_atomic_static STATIC ${BOOST_ATOMIC_SRC})
+add_library(boost_system_static STATIC ${BOOST_SYSTEM_SRC})
+add_library(boost_thread_static STATIC ${BOOST_THREAD_SRC})
+add_library(boost_context_static STATIC ${BOOST_CONTEXT_SRC})
+add_library(boost_coroutine_static STATIC ${BOOST_COROUTINE_SRC})
+add_library(boost_chrono_static STATIC ${BOOST_CHRONO_SRC})
+add_library(boost_filesystem_static STATIC ${BOOST_FILESYSTEM_SRC})
+add_library(boost_locale_static STATIC ${BOOST_LOCALE_SRC})
+add_library(boost_date_time_static STATIC ${BOOST_DATE_TIME_SRC})
+add_library(boost_regex_static STATIC ${BOOST_REGEX_SRC})
+add_library(boost_timer_static STATIC ${BOOST_TIMER_SRC})
+add_library(boost_exception_static STATIC ${BOOST_EXCEPTION_SRC})
+add_library(boost_random_static STATIC ${BOOST_RANDOM_SRC})
+add_library(boost_program_options_static STATIC ${BOOST_PROGRAM_OPTIONS_SRC} )
 
-ADD_LIBRARY(boost_filesystem_static STATIC ${BOOST_FILESYSTEM_SRC})
+target_include_directories(boost_system_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(boost_context_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(boost_static_libs PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(boost_filesystem_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(boost_system_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
+target_compile_definitions(boost_thread_static PRIVATE -DBOOST_THREAD_BUILD_LIB)
+target_compile_definitions(boost_context_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK)
 
-target_compile_definitions(boost_static_libs PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
-target_compile_definitions(boost_filesystem_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
-
-target_compile_definitions(boost_static_libs PRIVATE -DBOOST_THREAD_BUILD_LIB)
+target_link_libraries(boost_atomic_static boost_system_static)
+target_link_libraries(boost_filesystem_static boost_system_static)
+target_link_libraries(boost_thread_static boost_system_static)
+target_link_libraries(boost_coroutine_static boost_context_static boost_system_static)
+target_link_libraries(boost_chrono_static boost_system_static)
+target_link_libraries(boost_locale_static boost_system_static)
+target_link_libraries(boost_date_time_static boost_system_static boost_chrono_static)
+target_link_libraries(boost_regex_static boost_system_static)
+target_link_libraries(boost_timer_static boost_system_static boost_chrono_static)
+target_link_libraries(boost_exception_static boost_system_static)
+target_link_libraries(boost_random_static boost_system_static)
+target_link_libraries(boost_program_options_static boost_filesystem_static boost_system_static)
 
 if(WIN32)
-	target_compile_definitions(boost_static_libs PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
-	target_compile_definitions(boost_filesystem_static PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+	target_compile_definitions(boost_system_static PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
 endif()
 
-set(BOOST_LIBRARIES boost_filesystem_static boost_static_libs PARENT_SCOPE)
+set(BOOST_LIBRARIES
+	boost_atomic_static
+	boost_context_static boost_system_static boost_coroutine_static boost_chrono_static
+	boost_locale_static boost_date_time_static boost_regex_static boost_timer_static boost_exception_static
+	boost_filesystem_static boost_thread_static boost_random_static boost_program_options_static
+PARENT_SCOPE)
 
-set_target_properties(boost_static_libs PROPERTIES FOLDER "third_party")
-set_target_properties(boost_filesystem_static PROPERTIES FOLDER "third_party")
+set_target_properties(boost_system_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_atomic_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_filesystem_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_thread_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_context_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_coroutine_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_chrono_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_locale_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_date_time_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_regex_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_timer_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_exception_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_random_static PROPERTIES FOLDER "third_party/boost")
+set_target_properties(boost_program_options_static PROPERTIES FOLDER "third_party/boost")

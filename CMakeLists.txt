@@ -61,34 +61,43 @@ set(BOOST_CONTEXT_SRC
 
 if(WIN32)
 	list(APPEND BOOST_CONTEXT_SRC libs/context/src/windows/stack_traits.cpp)
+	set(ASSEMBLER masm)
+	set(ASM_FILE_EXT "asm")
+	set(EXEUCTABLEFORMAT "pe")
+	set(SYSABI "ms")
+
 	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_x86_64_ms_pe_masm.asm)
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_x86_64_ms_pe_masm.asm)
+		set(ARCH "x86_64")
 	else()
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_i386_ms_pe_masm.asm)
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_i386_ms_pe_masm.asm)
+		set(ARCH "i386")
 	endif()
 
-	add_definitions(-DBOOST_CONTEXT_EXPORT)
-
 else()
+	set(ASSEMBLER gas)
+	set(ASM_FILE_EXT "S")
+	set(EXEUCTABLEFORMAT "elf")
+
 	list(APPEND BOOST_CONTEXT_SRC libs/context/src/posix/stack_traits.cpp)
 
 	IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86")
+		set(SYSABI "sysv")
 		if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-			set(ARCH x86_64)
+			set(ARCH "x86_64")
 		else()
-			set(ARCH i386)
+			set(ARCH "i386")
 		endif()
-	else()
-
+	elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^arm")
+		set(SYSABI "aapcs")
+		if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+			set(ARCH "arm64")
+		else()
+			set(ARCH "arm")
+		endif()
 	endif()
-
-	list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_${ARCH}_sysv_elf_gas.S)
-	list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_${ARCH}_sysv_elf_gas.S)
-
 endif()
 
+list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
+list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
 
 set(BOOST_COROUTINE_SRC
 	libs/coroutine/src/detail/coroutine_context.cpp
@@ -227,6 +236,7 @@ target_include_directories(boost_context_static PUBLIC ${CMAKE_CURRENT_SOURCE_DI
 target_compile_definitions(boost_system_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
 target_compile_definitions(boost_thread_static PRIVATE -DBOOST_THREAD_BUILD_LIB)
 target_compile_definitions(boost_context_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK)
+target_compile_definitions(boost_context_static PRIVATE -DBOOST_CONTEXT_EXPORT)
 
 target_link_libraries(boost_atomic_static boost_system_static)
 target_link_libraries(boost_filesystem_static boost_system_static)

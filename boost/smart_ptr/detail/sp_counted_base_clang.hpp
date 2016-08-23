@@ -18,6 +18,8 @@
 #include <boost/detail/sp_typeinfo.hpp>
 #include <boost/cstdint.hpp>
 
+#error "how include me?"
+
 namespace boost
 {
 

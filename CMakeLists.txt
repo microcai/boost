@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.2)
+project(Boost)
 
 if(WIN32)
 ENABLE_LANGUAGE(ASM_MASM)
 else()
 ENABLE_LANGUAGE(ASM)
 endif()
+
+find_package(Threads)
 
 SET(BOOST_ATOMIC_SRC libs/atomic/src/lockpool.cpp)
 
@@ -61,34 +64,43 @@ set(BOOST_CONTEXT_SRC
 
 if(WIN32)
 	list(APPEND BOOST_CONTEXT_SRC libs/context/src/windows/stack_traits.cpp)
+	set(ASSEMBLER masm)
+	set(ASM_FILE_EXT "asm")
+	set(EXEUCTABLEFORMAT "pe")
+	set(SYSABI "ms")
+
 	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_x86_64_ms_pe_masm.asm)
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_x86_64_ms_pe_masm.asm)
+		set(ARCH "x86_64")
 	else()
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_i386_ms_pe_masm.asm)
-		list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_i386_ms_pe_masm.asm)
+		set(ARCH "i386")
 	endif()
 
-	add_definitions(-DBOOST_CONTEXT_EXPORT)
-
 else()
+	set(ASSEMBLER gas)
+	set(ASM_FILE_EXT "S")
+	set(EXEUCTABLEFORMAT "elf")
+
 	list(APPEND BOOST_CONTEXT_SRC libs/context/src/posix/stack_traits.cpp)
 
 	IF("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86")
+		set(SYSABI "sysv")
 		if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-			set(ARCH x86_64)
+			set(ARCH "x86_64")
 		else()
-			set(ARCH i386)
+			set(ARCH "i386")
 		endif()
-	else()
-
+	elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^arm")
+		set(SYSABI "aapcs")
+		if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+			set(ARCH "arm64")
+		else()
+			set(ARCH "arm")
+		endif()
 	endif()
-
-	list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_${ARCH}_sysv_elf_gas.S)
-	list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_${ARCH}_sysv_elf_gas.S)
-
 endif()
 
+list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
+list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
 
 set(BOOST_COROUTINE_SRC
 	libs/coroutine/src/detail/coroutine_context.cpp
@@ -206,50 +218,154 @@ set(BOOST_RANDOM_SRC libs/random/src/random_device.cpp)
 
 set(BOOST_SRCS ${BOOST_ATOMIC_SRC})
 
-add_library(boost_atomic_static STATIC ${BOOST_ATOMIC_SRC})
-add_library(boost_system_static STATIC ${BOOST_SYSTEM_SRC})
-add_library(boost_thread_static STATIC ${BOOST_THREAD_SRC})
-add_library(boost_context_static STATIC ${BOOST_CONTEXT_SRC})
-add_library(boost_coroutine_static STATIC ${BOOST_COROUTINE_SRC})
-add_library(boost_chrono_static STATIC ${BOOST_CHRONO_SRC})
-add_library(boost_filesystem_static STATIC ${BOOST_FILESYSTEM_SRC})
-add_library(boost_locale_static STATIC ${BOOST_LOCALE_SRC})
-add_library(boost_date_time_static STATIC ${BOOST_DATE_TIME_SRC})
-add_library(boost_regex_static STATIC ${BOOST_REGEX_SRC})
-add_library(boost_timer_static STATIC ${BOOST_TIMER_SRC})
-add_library(boost_exception_static STATIC ${BOOST_EXCEPTION_SRC})
-add_library(boost_random_static STATIC ${BOOST_RANDOM_SRC})
-add_library(boost_program_options_static STATIC ${BOOST_PROGRAM_OPTIONS_SRC} )
+add_library(boost_header INTERFACE)
+add_library(Boost::boost ALIAS boost_header)
 
-target_include_directories(boost_system_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(boost_context_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_atomic_static STATIC ${BOOST_ATOMIC_SRC})
+else()
+add_library(boost_atomic_static SHARED ${BOOST_ATOMIC_SRC})
+endif()
+add_library(Boost::atomic ALIAS boost_atomic_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_system_static STATIC ${BOOST_SYSTEM_SRC})
+else()
+add_library(boost_system_static SHARED ${BOOST_SYSTEM_SRC})
+endif()
+add_library(Boost::system ALIAS boost_system_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_thread_static STATIC ${BOOST_THREAD_SRC})
+else()
+add_library(boost_thread_static SHARED ${BOOST_THREAD_SRC})
+endif()
+add_library(Boost::thread ALIAS boost_thread_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_context_static STATIC ${BOOST_CONTEXT_SRC})
+else()
+add_library(boost_context_static SHARED ${BOOST_CONTEXT_SRC})
+endif()
+add_library(Boost::context ALIAS boost_context_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_coroutine_static STATIC ${BOOST_COROUTINE_SRC})
+else()
+add_library(boost_coroutine_static SHARED ${BOOST_COROUTINE_SRC})
+endif()
+add_library(Boost::coroutine ALIAS boost_coroutine_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_chrono_static STATIC ${BOOST_CHRONO_SRC})
+else()
+add_library(boost_chrono_static SHARED ${BOOST_CHRONO_SRC})
+endif()
+add_library(Boost::chrono ALIAS boost_chrono_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_filesystem_static STATIC ${BOOST_FILESYSTEM_SRC})
+else()
+add_library(boost_filesystem_static SHARED ${BOOST_FILESYSTEM_SRC})
+endif()
+add_library(Boost::filesystem ALIAS boost_filesystem_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_locale_static STATIC ${BOOST_LOCALE_SRC})
+else()
+add_library(boost_locale_static SHARED ${BOOST_LOCALE_SRC})
+endif()
+add_library(Boost::locale ALIAS boost_locale_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_date_time_static STATIC ${BOOST_DATE_TIME_SRC})
+else()
+add_library(boost_date_time_static SHARED ${BOOST_DATE_TIME_SRC})
+endif()
+add_library(Boost::date_time ALIAS boost_date_time_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_regex_static STATIC ${BOOST_REGEX_SRC})
+else()
+add_library(boost_regex_static SHARED ${BOOST_REGEX_SRC})
+endif()
+add_library(Boost::regex ALIAS boost_regex_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_timer_static STATIC ${BOOST_TIMER_SRC})
+else()
+add_library(boost_timer_static SHARED ${BOOST_TIMER_SRC})
+endif()
+add_library(Boost::timer ALIAS boost_timer_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_exception_static STATIC ${BOOST_EXCEPTION_SRC})
+else()
+add_library(boost_exception_static SHARED ${BOOST_EXCEPTION_SRC})
+endif()
+add_library(Boost::exception ALIAS boost_exception_static)
+
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_random_static STATIC ${BOOST_RANDOM_SRC})
+else()
+add_library(boost_random_static SHARED ${BOOST_RANDOM_SRC})
+endif()
+add_library(Boost::random ALIAS boost_random_static)
+
+if(Boost_USE_STATIC_LIBS)
+add_library(boost_program_options_static STATIC ${BOOST_PROGRAM_OPTIONS_SRC} )
+else()
+add_library(boost_program_options_static SHARED ${BOOST_PROGRAM_OPTIONS_SRC})
+endif()
+add_library(Boost::program_options ALIAS boost_program_options_static)
+
+target_include_directories(boost_header INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_definitions(boost_system_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBOOST_FILESYSTEM_STATIC_LINK)
 target_compile_definitions(boost_thread_static PRIVATE -DBOOST_THREAD_BUILD_LIB)
 target_compile_definitions(boost_context_static PUBLIC -DBOOST_ALL_NO_LIB -DBOOST_ALL_STATIC_LINK)
+target_compile_definitions(boost_context_static PRIVATE -DBOOST_CONTEXT_EXPORT)
 
-target_link_libraries(boost_atomic_static boost_system_static)
-target_link_libraries(boost_filesystem_static boost_system_static)
-target_link_libraries(boost_thread_static boost_system_static)
-target_link_libraries(boost_coroutine_static boost_context_static boost_system_static)
-target_link_libraries(boost_chrono_static boost_system_static)
-target_link_libraries(boost_locale_static boost_system_static)
-target_link_libraries(boost_date_time_static boost_system_static boost_chrono_static)
-target_link_libraries(boost_regex_static boost_system_static)
-target_link_libraries(boost_timer_static boost_system_static boost_chrono_static)
-target_link_libraries(boost_exception_static boost_system_static)
-target_link_libraries(boost_random_static boost_system_static)
-target_link_libraries(boost_program_options_static boost_filesystem_static boost_system_static)
+target_link_libraries(boost_system_static boost_header)
+target_link_libraries(boost_atomic_static boost_system_static boost_header)
+target_link_libraries(boost_filesystem_static boost_system_static boost_header)
+target_link_libraries(boost_thread_static boost_system_static boost_header Threads::Threads)
+target_link_libraries(boost_context_static boost_header)
+target_link_libraries(boost_coroutine_static boost_context_static boost_system_static boost_header)
+target_link_libraries(boost_chrono_static boost_system_static boost_header)
+target_link_libraries(boost_locale_static boost_system_static boost_header)
+target_link_libraries(boost_date_time_static boost_system_static boost_chrono_static boost_header)
+target_link_libraries(boost_regex_static boost_system_static boost_header)
+target_link_libraries(boost_timer_static boost_system_static boost_chrono_static boost_header)
+target_link_libraries(boost_exception_static boost_system_static boost_header)
+target_link_libraries(boost_random_static boost_system_static boost_header)
+target_link_libraries(boost_program_options_static boost_filesystem_static boost_system_static boost_header)
 
 if(WIN32)
-	target_compile_definitions(boost_system_static PUBLIC -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+	target_compile_definitions(boost_header INTERFACE -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		target_compile_definitions(boost_header INTERFACE -DBOOST_SP_USE_STD_ATOMIC -DBOOST_USE_WINDOWS_H)
+		set_property(SOURCE libs/locale/src/shared/message.cpp APPEND PROPERTY CMAKE_CXX_FLAGS "-O0")
+	endif()
 endif()
 
 set(BOOST_LIBRARIES
-	boost_atomic_static
-	boost_context_static boost_system_static boost_coroutine_static boost_chrono_static
-	boost_locale_static boost_date_time_static boost_regex_static boost_timer_static boost_exception_static
-	boost_filesystem_static boost_thread_static boost_random_static boost_program_options_static
+	Boost::boost
+	Boost::atomic
+	Boost::context
+	Boost::system
+	Boost::coroutine
+	Boost::chrono
+	Boost::date_time
+	Boost::regex
+	Boost::timer
+	Boost::exception
+	Boost::filesystem
+	Boost::thread
+	Boost::random
+	Boost::program_options
+	# boost_locale_static
 PARENT_SCOPE)
 
 set_target_properties(boost_system_static PROPERTIES FOLDER "third_party/boost")

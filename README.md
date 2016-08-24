@@ -19,7 +19,13 @@ $ git submodule add https://github.com/microcai/boost.git third_party/boost
 then add
 
 ```
-add_subdirectory(third_party/boost)
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+find_package(Boost 1.55 COMPONENTS thread system filesystem program_options random atomic chrono)
+if (NOT Boost_FOUND)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/boost)
+endif()
 ```
 
 to your project CMakeLists.txt
@@ -46,7 +52,13 @@ $ git submodule add https://github.com/microcai/boost.git third_party/boost
 然后在 CMakeLists.txt 里加入这么一条
 
 ```
-add_subdirectory(third_party/boost)
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+find_package(Boost 1.55 COMPONENTS thread system filesystem program_options random atomic chrono)
+if (NOT Boost_FOUND)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/boost)
+endif()
 ```
 
 接下来就可以使用了。用如下的命令添加链接就可以了。头文件路径会自动加入。

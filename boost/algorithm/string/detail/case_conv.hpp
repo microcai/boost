@@ -1,4 +1,4 @@
-//  Boost string_algo library string_funct.hpp header file  ---------------------------//
+﻿//  Boost string_algo library string_funct.hpp header file  ---------------------------//
 
 //  Copyright Pavol Droba 2002-2003.
 //
@@ -30,8 +30,11 @@ namespace boost {
 
             // a tolower functor
             template<typename CharT>
-            struct to_lowerF : public std::unary_function<CharT, CharT>
+            struct to_lowerF
             {
+				typedef CharT argument_type;
+				typedef	CharT result_type;
+
                 // Constructor
                 to_lowerF( const std::locale& Loc ) : m_Loc( &Loc ) {}
 
@@ -50,9 +53,12 @@ namespace boost {
 
             // a toupper functor
             template<typename CharT>
-            struct to_upperF : public std::unary_function<CharT, CharT>
+            struct to_upperF
             {
-                // Constructor
+				typedef CharT argument_type;
+				typedef	CharT result_type;
+
+				// Constructor
                 to_upperF( const std::locale& Loc ) : m_Loc( &Loc ) {}
 
                 // Operation
@@ -81,9 +87,9 @@ namespace boost {
                 const RangeT& Input,
                 FunctorT Functor)
             {
-                return std::transform( 
-                    ::boost::begin(Input), 
-                    ::boost::end(Input), 
+                return std::transform(
+                    ::boost::begin(Input),
+                    ::boost::end(Input),
                     Output,
                     Functor);
             }
@@ -94,16 +100,16 @@ namespace boost {
                 const RangeT& Input,
                 FunctorT Functor)
             {
-                std::transform( 
-                    ::boost::begin(Input), 
-                    ::boost::end(Input), 
+                std::transform(
+                    ::boost::begin(Input),
+                    ::boost::end(Input),
                     ::boost::begin(Input),
                     Functor);
             }
 
             template<typename SequenceT, typename RangeT, typename FunctorT>
-            inline SequenceT transform_range_copy( 
-                const RangeT& Input, 
+            inline SequenceT transform_range_copy(
+                const RangeT& Input,
                 FunctorT Functor)
             {
                 return SequenceT(
@@ -111,7 +117,7 @@ namespace boost {
                         ::boost::begin(Input),
                         Functor),
                     ::boost::make_transform_iterator(
-                        ::boost::end(Input), 
+                        ::boost::end(Input),
                         Functor));
             }
 

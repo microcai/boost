@@ -182,22 +182,22 @@ bool basic_xml_grammar<CharType>::my_parse(
         return false;
     }
     
-    boost::io::ios_flags_saver ifs(is);
     is >> std::noskipws;
 
     std::basic_string<CharType> arg;
     
-    CharType val;
-    do{
-        typename basic_xml_grammar<CharType>::IStream::int_type
-            result = is.get();
+    for(;;){
+        CharType result;
+        is.get(result);
         if(is.fail())
             return false;
-        val = static_cast<CharType>(result);
-        arg += val;
+        if(is.eof())
+            return false;
+        arg += result;
+        if(result == delimiter)
+            break;
     }
-    while(val != delimiter);
-    
+
     // read just one more character.  This will be the newline after the tag
     // this is so that the next operation will return fail if the archive
     // is terminated.  This will permit the archive to be used for debug
@@ -227,7 +227,7 @@ bool basic_xml_grammar<CharType>::parse_string(IStream & is, StringType & s){
     bool result = my_parse(is, content, '<');
     // note: unget caused a problem with dinkumware.  replace with
  // is.unget();
-    // putback another dilimiter instead
+    // putback another delimiter instead
     is.putback('<');
     if(result)
         s = rv.contents;

@@ -1,4 +1,4 @@
-//
+﻿//
 //  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
@@ -21,7 +21,7 @@
 
 namespace boost {
     namespace locale {
-        
+
         ///
         /// \defgroup format Format
         ///
@@ -43,7 +43,7 @@ namespace boost {
                     writer_(&formattible::void_write)
                 {
                 }
-                
+
                 formattible(formattible const &other) :
                     pointer_(other.pointer_),
                     writer_(other.writer_)
@@ -58,7 +58,7 @@ namespace boost {
                     }
                     return *this;
                 }
-                
+
                 template<typename Type>
                 formattible(Type const &value)
                 {
@@ -91,18 +91,18 @@ namespace boost {
                 {
                     output << *static_cast<Type const *>(ptr);
                 }
-                
+
                 void const *pointer_;
                 writer_type writer_;
             }; // formattible
-    
+
             class BOOST_LOCALE_DECL format_parser  {
             public:
                 format_parser(std::ios_base &ios,void *,void (*imbuer)(void *,std::locale const &));
                 ~format_parser();
-                
+
                 unsigned get_position();
-                
+
                 void set_one_flag(std::string const &key,std::string const &value);
 
                 template<typename CharType>
@@ -121,7 +121,7 @@ namespace boost {
 
                 std::ios_base &ios_;
                 struct data;
-                std::auto_ptr<data> d;
+                std::shared_ptr<data> d;
             };
 
         }
@@ -148,7 +148,7 @@ namespace boost {
         ///
         /// For example:
         ///
-        /// \code 
+        /// \code
         ///   cout << format("The height of water at {1,time} is {2,num=fixed,precision=3}") % time % height;
         /// \endcode
         ///
@@ -160,10 +160,10 @@ namespace boost {
         ///     -  \c oct -- display in octal format
         ///     -  \c sci or \c scientific -- display in scientific format
         ///     -  \c fix or \c fixed -- display in fixed format
-        ///     .      
+        ///     .
         ///     For example \c number=sci
         /// -  \c cur or \c currency -- format currency. Optional values are:
-        /// 
+        ///
         ///     -  \c iso -- display using ISO currency symbol.
         ///     -  \c nat or \c national -- display using national currency symbol.
         ///     .
@@ -195,28 +195,28 @@ namespace boost {
         ///    \code
         ///    cout << format("Local time is: {1,time,local}, universal time is {1,time,gmt}") % time;
         ///    \endcode
-        /// 
-        /// 
+        ///
+        ///
         /// Invalid formatting strings are slightly ignored. This would prevent from translator
         /// to crash the program in unexpected location.
-        /// 
+        ///
         template<typename CharType>
         class basic_format {
         public:
             typedef CharType char_type; ///< Underlying character type
             typedef basic_message<char_type> message_type; ///< The translation message type
             /// \cond INTERNAL
-            typedef details::formattible<CharType> formattible_type; 
-            /// \endcond 
+            typedef details::formattible<CharType> formattible_type;
+            /// \endcond
 
             typedef std::basic_string<CharType> string_type; ///< string type for this type of character
             typedef std::basic_ostream<CharType> stream_type; ///< output stream type for this type of character
- 
+
 
             ///
             /// Create a format class for \a format_string
             ///
-            basic_format(string_type format_string) : 
+            basic_format(string_type format_string) :
                 format_(format_string),
                 translate_(false),
                 parameters_count_(0)
@@ -226,7 +226,7 @@ namespace boost {
             /// Create a format class using message \a trans. The message if translated first according
             /// to the rules of target locale and then interpreted as format string
             ///
-            basic_format(message_type const &trans) : 
+            basic_format(message_type const &trans) :
                 message_(trans),
                 translate_(true),
                 parameters_count_(0)
@@ -265,17 +265,17 @@ namespace boost {
                     format = message_.str(out.getloc(),ios_info::get(out).domain_id());
                 else
                     format = format_;
-               
+
                 format_output(out,format);
 
             }
-                        
-            
+
+
         private:
 
             class format_guard {
             public:
-                format_guard(details::format_parser &fmt) : 
+                format_guard(details::format_parser &fmt) :
                     fmt_(&fmt),
                     restored_(false)
                 {
@@ -299,7 +299,7 @@ namespace boost {
                 details::format_parser *fmt_;
                 bool restored_;
             };
-            
+
             void format_output(stream_type &out,string_type const &sformat) const
             {
                 char_type obrk='{';
@@ -330,12 +330,12 @@ namespace boost {
                         continue;
                     }
                     pos++;
-                  
+
                     details::format_parser fmt(out,static_cast<void *>(&out),&basic_format::imbue_locale);
 
                     format_guard guard(fmt);
 
-                    while(pos < size) { 
+                    while(pos < size) {
                         std::string key;
                         std::string svalue;
                         string_type value;
@@ -383,9 +383,9 @@ namespace boost {
                         if(use_svalue) {
                             fmt.set_one_flag(key,svalue);
                         }
-                        else 
+                        else
                             fmt.set_flag_with_str(key,value);
-                        
+
                         if(format[pos]==comma) {
                             pos++;
                             continue;
@@ -397,7 +397,7 @@ namespace boost {
                             pos++;
                             break;
                         }
-                        else {                        
+                        else {
                             guard.restore();
                             break;
                         }
@@ -405,9 +405,9 @@ namespace boost {
                 }
             }
 
-      
+
             //
-            // Non-copyable 
+            // Non-copyable
             //
             basic_format(basic_format const &other);
             void operator=(basic_format const &other);
@@ -416,7 +416,7 @@ namespace boost {
             {
                 if(parameters_count_ >= base_params_)
                     ext_params_.push_back(param);
-                else 
+                else
                     parameters_[parameters_count_] = param;
                 parameters_count_++;
             }
@@ -439,7 +439,7 @@ namespace boost {
 
 
             static unsigned const base_params_ = 8;
-            
+
             message_type message_;
             string_type format_;
             bool translate_;

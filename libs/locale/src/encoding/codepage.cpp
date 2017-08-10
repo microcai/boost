@@ -1,4 +1,4 @@
-//
+﻿//
 //  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
@@ -32,14 +32,14 @@ namespace boost {
     namespace locale {
         namespace conv {
             namespace impl {
-                
+
                 std::string convert_between(char const *begin,
                                             char const *end,
                                             char const *to_charset,
                                             char const *from_charset,
                                             method_type how)
                 {
-                    std::auto_ptr<converter_between> cvt;
+                    std::shared_ptr<converter_between> cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_between());
                     if(cvt->open(to_charset,from_charset,how))
@@ -65,7 +65,7 @@ namespace boost {
                                         char const *charset,
                                         method_type how)
                 {
-                    std::auto_ptr<converter_to_utf<CharType> > cvt;
+                    std::shared_ptr<converter_to_utf<CharType> > cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_to_utf<CharType>());
                     if(cvt->open(charset,how))
@@ -91,7 +91,7 @@ namespace boost {
                                         char const *charset,
                                         method_type how)
                 {
-                    std::auto_ptr<converter_from_utf<CharType> > cvt;
+                    std::shared_ptr<converter_from_utf<CharType> > cvt;
                     #ifdef BOOST_LOCALE_WITH_ICONV
                     cvt.reset(new iconv_from_utf<CharType>());
                     if(cvt->open(charset,how))
@@ -125,12 +125,12 @@ namespace boost {
                     }
                     return charset;
                 }
-                
 
-            } // impl 
+
+            } // impl
 
             using namespace impl;
-            
+
             std::string between(char const *begin,char const *end,
                                 std::string const &to_charset,std::string const &from_charset,method_type how)
             {

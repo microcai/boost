@@ -1,4 +1,4 @@
-//
+﻿//
 //  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
@@ -71,7 +71,7 @@ namespace boost {
         {
             d->chars=t;
         }
-        
+
         character_facet_type generator::characters() const
         {
             return d->chars;
@@ -82,7 +82,7 @@ namespace boost {
             if(std::find(d->domains.begin(),d->domains.end(),domain) == d->domains.end())
                 d->domains.push_back(domain);
         }
-        
+
         void generator::set_default_messages_domain(std::string const &domain)
         {
             std::vector<std::string>::iterator p;
@@ -125,7 +125,7 @@ namespace boost {
                     return p->second;
                 }
             }
-            shared_ptr<localization_backend> backend(d->backend_manager.get());
+            std::shared_ptr<localization_backend> backend(d->backend_manager.get());
             set_all_options(backend,id);
 
             std::locale result = base;
@@ -170,12 +170,12 @@ namespace boost {
         {
             return d->caching_enabled;
         }
-        void generator::locale_cache_enabled(bool enabled) 
+        void generator::locale_cache_enabled(bool enabled)
         {
             d->caching_enabled = enabled;
         }
-        
-        void generator::set_all_options(shared_ptr<localization_backend> backend,std::string const &id) const
+
+        void generator::set_all_options(std::shared_ptr<localization_backend> backend,std::string const &id) const
         {
             backend->set_option("locale",id);
             if(d->use_ansi_encoding)
@@ -185,7 +185,7 @@ namespace boost {
             for(size_t i=0;i<d->paths.size();i++)
                 backend->set_option("message_path",d->paths[i]);
         }
-        
+
     } // locale
 } // boost
-// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 
+// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

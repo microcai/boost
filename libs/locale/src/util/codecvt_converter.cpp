@@ -1,4 +1,4 @@
-//
+﻿//
 //  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
@@ -15,7 +15,7 @@
 #include <boost/locale/util.hpp>
 
 #ifdef BOOST_MSVC
-#  pragma warning(disable : 4244 4996) // loose data 
+#  pragma warning(disable : 4244 4996) // loose data
 #endif
 
 #include <cstddef>
@@ -25,14 +25,14 @@
 
 //#define DEBUG_CODECVT
 
-#ifdef DEBUG_CODECVT            
+#ifdef DEBUG_CODECVT
 #include <iostream>
 #endif
 
 namespace boost {
 namespace locale {
 namespace util {
-    
+
     class utf8_converter  : public base_converter {
     public:
         virtual int max_len() const
@@ -53,7 +53,7 @@ namespace util {
         virtual uint32_t to_unicode(char const *&begin,char const *end)
         {
             char const *p=begin;
-                        
+
             utf::code_point c = utf::utf_traits<char>::decode(p,end);
 
             if(c==utf::illegal)
@@ -66,7 +66,7 @@ namespace util {
             return c;
         }
 
-        virtual uint32_t from_unicode(uint32_t u,char *begin,char const *end) 
+        virtual uint32_t from_unicode(uint32_t u,char *begin,char const *end)
         {
             if(!utf::is_valid_codepoint(u))
                 return illegal;
@@ -81,7 +81,7 @@ namespace util {
 
     class simple_converter_impl {
     public:
-        
+
         static const int hash_table_size = 1024;
 
         simple_converter_impl(std::string const &encoding)
@@ -149,27 +149,27 @@ namespace util {
     class simple_converter : public base_converter {
     public:
 
-        virtual ~simple_converter() 
+        virtual ~simple_converter()
         {
         }
 
-        simple_converter(std::string const &encoding) : 
+        simple_converter(std::string const &encoding) :
             cvt_(encoding)
         {
         }
 
-        virtual int max_len() const 
+        virtual int max_len() const
         {
             return 1;
         }
 
-        virtual bool is_thread_safe() const 
+        virtual bool is_thread_safe() const
         {
             return true;
         }
-        virtual base_converter *clone() const 
+        virtual base_converter *clone() const
         {
-           return new simple_converter(*this); 
+           return new simple_converter(*this);
         }
 
         virtual uint32_t to_unicode(char const *&begin,char const *end)
@@ -196,7 +196,7 @@ namespace util {
         }
 
         struct state_type {};
-        static state_type initial_state(generic_codecvt_base::initial_convertion_state /* unused */) 
+        static state_type initial_state(generic_codecvt_base::initial_convertion_state /* unused */)
         {
             return state_type();
         }
@@ -205,7 +205,7 @@ namespace util {
             return 1;
         }
 
-        utf::code_point to_unicode(state_type &,char const *&begin,char const *end) const 
+        utf::code_point to_unicode(state_type &,char const *&begin,char const *end) const
         {
             return cvt_.to_unicode(begin,end);
         }
@@ -215,8 +215,8 @@ namespace util {
             return cvt_.from_unicode(u,begin,end);
         }
     private:
-        simple_converter_impl cvt_;        
-         
+        simple_converter_impl cvt_;
+
     };
 
     namespace {
@@ -268,49 +268,49 @@ namespace util {
                         compare_strings);
         return 0;
     }
-    
-    std::auto_ptr<base_converter> create_simple_converter(std::string const &encoding)
+
+    std::shared_ptr<base_converter> create_simple_converter(std::string const &encoding)
     {
-        std::auto_ptr<base_converter> res;
+        std::shared_ptr<base_converter> res;
         if(check_is_simple_encoding(encoding))
             res.reset(new simple_converter(encoding));
         return res;
     }
 
-    std::auto_ptr<base_converter> create_utf8_converter()
+    std::shared_ptr<base_converter> create_utf8_converter()
     {
-        std::auto_ptr<base_converter> res(new utf8_converter());
+        std::shared_ptr<base_converter> res(new utf8_converter());
         return res;
     }
-    
+
     template<typename CharType>
     class code_converter : public generic_codecvt<CharType,code_converter<CharType> >
     {
     public:
-        code_converter(std::auto_ptr<base_converter> cvt,size_t refs = 0) : 
+        code_converter(std::shared_ptr<base_converter> cvt,size_t refs = 0) :
             generic_codecvt<CharType,code_converter<CharType> >(refs),
-            cvt_(cvt) 
+            cvt_(cvt)
         {
             max_len_ = cvt_->max_len();
             thread_safe_ = cvt_->is_thread_safe();
         }
 
-        typedef std::auto_ptr<base_converter> state_type;
+        typedef std::shared_ptr<base_converter> state_type;
 
         int max_encoding_length() const
         {
             return max_len_;
         }
 
-        std::auto_ptr<base_converter> initial_state(generic_codecvt_base::initial_convertion_state /* unused */) const
+        std::shared_ptr<base_converter> initial_state(generic_codecvt_base::initial_convertion_state /* unused */) const
         {
-            std::auto_ptr<base_converter> r;
+            std::shared_ptr<base_converter> r;
             if(!thread_safe_)
                 r.reset(cvt_->clone());
             return r;
         }
 
-        utf::code_point to_unicode(std::auto_ptr<base_converter> &ptr,char const *&begin,char const *end) const 
+        utf::code_point to_unicode(std::shared_ptr<base_converter> &ptr,char const *&begin,char const *end) const
         {
             if(thread_safe_)
                 return cvt_->to_unicode(begin,end);
@@ -318,22 +318,22 @@ namespace util {
                 return ptr->to_unicode(begin,end);
         }
 
-        utf::code_point from_unicode(std::auto_ptr<base_converter> &ptr,utf::code_point u,char *begin,char const *end) const
+        utf::code_point from_unicode(std::shared_ptr<base_converter> &ptr,utf::code_point u,char *begin,char const *end) const
         {
             if(thread_safe_)
                 return cvt_->from_unicode(u,begin,end);
             else
                 return ptr->from_unicode(u,begin,end);
         }
-        
+
     private:
-        std::auto_ptr<base_converter> cvt_;
+        std::shared_ptr<base_converter> cvt_;
         int max_len_;
         bool thread_safe_;
     };
 
 
-    std::locale create_codecvt(std::locale const &in,std::auto_ptr<base_converter> cvt,character_facet_type type)
+    std::locale create_codecvt(std::locale const &in,std::shared_ptr<base_converter> cvt,character_facet_type type)
     {
         if(!cvt.get())
             cvt.reset(new base_converter());
@@ -356,10 +356,10 @@ namespace util {
     }
 
 
-    /// 
+    ///
     /// Install utf8 codecvt to UTF-16 or UTF-32 into locale \a in and return
-    /// new locale that is based on \a in and uses new facet. 
-    /// 
+    /// new locale that is based on \a in and uses new facet.
+    ///
     std::locale create_utf8_codecvt(std::locale const &in,character_facet_type type)
     {
         switch(type) {
@@ -383,7 +383,7 @@ namespace util {
     ///
     /// This function installs codecvt that can be used for conversion between single byte
     /// character encodings like ISO-8859-1, koi8-r, windows-1255 and Unicode code points,
-    /// 
+    ///
     /// Throws invalid_charset_error if the chacater set is not supported or isn't single byte character
     /// set
     std::locale create_simple_codecvt(std::locale const &in,std::string const &encoding,character_facet_type type)
@@ -412,7 +412,7 @@ namespace util {
 
 
 } // util
-} // locale 
+} // locale
 } // boost
 
 // vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

@@ -1,4 +1,4 @@
-//
+﻿//
 // impl/spawn.hpp
 // ~~~~~~~~~~~~~~
 //
@@ -265,15 +265,12 @@ namespace detail {
     void operator()(typename basic_yield_context<Handler>::caller_type& ca)
     {
       shared_ptr<spawn_data<Handler, Function> > data(data_);
-#if !defined(BOOST_COROUTINES_UNIDIRECT) && !defined(BOOST_COROUTINES_V2)
-      ca(); // Yield until coroutine pointer has been initialised.
-#endif // !defined(BOOST_COROUTINES_UNIDIRECT) && !defined(BOOST_COROUTINES_V2)
-      const basic_yield_context<Handler> yield(
-          data->coro_, ca, data->handler_);
-      (data->function_)(yield);
-      if (data->call_handler_)
-        (data->handler_)();
-    }
+	  const basic_yield_context<Handler> yield(
+		  data->coro_, ca, data->handler_);
+	  (data->function_)(yield);
+	  if (data->call_handler_)
+		  (data->handler_)();
+	}
 
     shared_ptr<spawn_data<Handler, Function> > data_;
   };
@@ -285,13 +282,12 @@ namespace detail {
     {
       typedef typename basic_yield_context<Handler>::callee_type callee_type;
       coro_entry_point<Handler, Function> entry_point = { data_ };
-      shared_ptr<callee_type> coro(new callee_type(entry_point, attributes_));
+      shared_ptr<callee_type> coro(new callee_type(entry_point));
       data_->coro_ = coro;
       (*coro)();
     }
 
     shared_ptr<spawn_data<Handler, Function> > data_;
-    boost::coroutines::attributes attributes_;
   };
 
   inline void default_spawn_handler() {}
@@ -300,22 +296,19 @@ namespace detail {
 
 template <typename Handler, typename Function>
 void spawn(BOOST_ASIO_MOVE_ARG(Handler) handler,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes)
+    BOOST_ASIO_MOVE_ARG(Function) function)
 {
   detail::spawn_helper<Handler, Function> helper;
   helper.data_.reset(
       new detail::spawn_data<Handler, Function>(
         BOOST_ASIO_MOVE_CAST(Handler)(handler), true,
         BOOST_ASIO_MOVE_CAST(Function)(function)));
-  helper.attributes_ = attributes;
   boost_asio_handler_invoke_helpers::invoke(helper, helper.data_->handler_);
 }
 
 template <typename Handler, typename Function>
 void spawn(basic_yield_context<Handler> ctx,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes)
+    BOOST_ASIO_MOVE_ARG(Function) function)
 {
   Handler handler(ctx.handler_); // Explicit copy that might be moved from.
   detail::spawn_helper<Handler, Function> helper;
@@ -323,26 +316,24 @@ void spawn(basic_yield_context<Handler> ctx,
       new detail::spawn_data<Handler, Function>(
         BOOST_ASIO_MOVE_CAST(Handler)(handler), false,
         BOOST_ASIO_MOVE_CAST(Function)(function)));
-  helper.attributes_ = attributes;
-  boost_asio_handler_invoke_helpers::invoke(helper, helper.data_->handler_);
+
+	boost_asio_handler_invoke_helpers::invoke(helper, helper.data_->handler_);
 }
 
 template <typename Function>
 void spawn(boost::asio::io_service::strand strand,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes)
+    BOOST_ASIO_MOVE_ARG(Function) function)
 {
   boost::asio::spawn(strand.wrap(&detail::default_spawn_handler),
-      BOOST_ASIO_MOVE_CAST(Function)(function), attributes);
+      BOOST_ASIO_MOVE_CAST(Function)(function));
 }
 
 template <typename Function>
 void spawn(boost::asio::io_service& io_service,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes)
+    BOOST_ASIO_MOVE_ARG(Function) function)
 {
   boost::asio::spawn(boost::asio::io_service::strand(io_service),
-      BOOST_ASIO_MOVE_CAST(Function)(function), attributes);
+      BOOST_ASIO_MOVE_CAST(Function)(function));
 }
 
 #endif // !defined(GENERATING_DOCUMENTATION)

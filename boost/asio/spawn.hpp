@@ -1,4 +1,4 @@
-//
+﻿//
 // spawn.hpp
 // ~~~~~~~~~
 //
@@ -16,7 +16,7 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
-#include <boost/coroutine/all.hpp>
+#include <boost/coroutine2/all.hpp>
 #include <boost/asio/detail/weak_ptr.hpp>
 #include <boost/asio/detail/wrapped_handler.hpp>
 #include <boost/asio/io_service.hpp>
@@ -56,14 +56,10 @@ public:
    * When using Boost.Coroutine v2 (unidirectional coroutines), this type is:
    * @code push_coroutine<void> @endcode
    */
-#if defined(GENERATING_DOCUMENTATION)
-  typedef implementation_defined callee_type;
-#elif defined(BOOST_COROUTINES_UNIDIRECT) || defined(BOOST_COROUTINES_V2)
-  typedef boost::coroutines::push_coroutine<void> callee_type;
-#else
-  typedef boost::coroutines::coroutine<void()> callee_type;
-#endif
-  
+
+	typedef boost::coroutines2::coroutine<void>::push_type callee_type;
+
+
   /// The coroutine caller type, used by the implementation.
   /**
    * When using Boost.Coroutine v1, this type is:
@@ -71,13 +67,8 @@ public:
    * When using Boost.Coroutine v2 (unidirectional coroutines), this type is:
    * @code pull_coroutine<void> @endcode
    */
-#if defined(GENERATING_DOCUMENTATION)
-  typedef implementation_defined caller_type;
-#elif defined(BOOST_COROUTINES_UNIDIRECT) || defined(BOOST_COROUTINES_V2)
-  typedef boost::coroutines::pull_coroutine<void> caller_type;
-#else
-  typedef boost::coroutines::coroutine<void()>::caller_type caller_type;
-#endif
+  typedef boost::coroutines2::coroutine<void>::pull_type caller_type;
+
 
   /// Construct a yield context to represent the specified coroutine.
   /**
@@ -193,9 +184,7 @@ typedef basic_yield_context<
  */
 template <typename Handler, typename Function>
 void spawn(BOOST_ASIO_MOVE_ARG(Handler) handler,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes
-      = boost::coroutines::attributes());
+    BOOST_ASIO_MOVE_ARG(Function) function);
 
 /// Start a new stackful coroutine, inheriting the execution context of another.
 /**
@@ -214,9 +203,7 @@ void spawn(BOOST_ASIO_MOVE_ARG(Handler) handler,
  */
 template <typename Handler, typename Function>
 void spawn(basic_yield_context<Handler> ctx,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes
-      = boost::coroutines::attributes());
+    BOOST_ASIO_MOVE_ARG(Function) function);
 
 /// Start a new stackful coroutine that executes in the context of a strand.
 /**
@@ -233,9 +220,7 @@ void spawn(basic_yield_context<Handler> ctx,
  */
 template <typename Function>
 void spawn(boost::asio::io_service::strand strand,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes
-      = boost::coroutines::attributes());
+    BOOST_ASIO_MOVE_ARG(Function) function);
 
 /// Start a new stackful coroutine that executes on a given io_service.
 /**
@@ -251,9 +236,7 @@ void spawn(boost::asio::io_service::strand strand,
  */
 template <typename Function>
 void spawn(boost::asio::io_service& io_service,
-    BOOST_ASIO_MOVE_ARG(Function) function,
-    const boost::coroutines::attributes& attributes
-      = boost::coroutines::attributes());
+    BOOST_ASIO_MOVE_ARG(Function) function);
 
 /*@}*/
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+﻿cmake_minimum_required(VERSION 3.2)
 project(Boost)
 
 if(WIN32)
@@ -60,6 +60,7 @@ set(BOOST_CHRONO_SRC
 
 set(BOOST_CONTEXT_SRC
 	libs/context/src/execution_context.cpp
+	libs/context/src/continuation.cpp
 )
 
 if(WIN32)
@@ -78,7 +79,11 @@ if(WIN32)
 else()
 	set(ASSEMBLER gas)
 	set(ASM_FILE_EXT "S")
+	if (APPLE)
+	set(EXEUCTABLEFORMAT "macho")
+	else()
 	set(EXEUCTABLEFORMAT "elf")
+	endif()
 
 	list(APPEND BOOST_CONTEXT_SRC libs/context/src/posix/stack_traits.cpp)
 
@@ -99,8 +104,13 @@ else()
 	endif()
 endif()
 
-list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/jump_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
-list(APPEND BOOST_CONTEXT_SRC libs/context/src/asm/make_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
+list(APPEND BOOST_CONTEXT_SRC
+	libs/context/src/asm/jump_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
+list(APPEND BOOST_CONTEXT_SRC
+	libs/context/src/asm/make_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
+
+list(APPEND BOOST_CONTEXT_SRC
+	libs/context/src/asm/ontop_${ARCH}_${SYSABI}_${EXEUCTABLEFORMAT}_${ASSEMBLER}.${ASM_FILE_EXT})
 
 set(BOOST_COROUTINE_SRC
 	libs/coroutine/src/detail/coroutine_context.cpp
@@ -216,8 +226,6 @@ set(BOOST_TIMER_SRC
 
 set(BOOST_RANDOM_SRC libs/random/src/random_device.cpp)
 
-set(BOOST_SRCS ${BOOST_ATOMIC_SRC})
-
 add_library(boost_header INTERFACE)
 add_library(Boost::boost ALIAS boost_header)
 
@@ -254,14 +262,6 @@ add_library(Boost::context ALIAS boost_context_dll)
 endif()
 
 if(Boost_USE_STATIC_LIBS)
-add_library(boost_coroutine_static STATIC ${BOOST_COROUTINE_SRC})
-add_library(Boost::coroutine ALIAS boost_coroutine_static)
-else()
-add_library(boost_coroutine_dll SHARED ${BOOST_COROUTINE_SRC})
-add_library(Boost::coroutine ALIAS boost_coroutine_dll)
-endif()
-
-if(Boost_USE_STATIC_LIBS)
 add_library(boost_chrono_static STATIC ${BOOST_CHRONO_SRC})
 add_library(Boost::chrono ALIAS boost_chrono_static)
 else()
@@ -278,12 +278,33 @@ add_library(Boost::filesystem ALIAS boost_filesystem_dll)
 endif()
 
 if(Boost_USE_STATIC_LIBS)
-add_library(boost_locale_static STATIC ${BOOST_LOCALE_SRC})
-add_library(Boost::locale ALIAS boost_locale_static)
+	add_library(boost_locale_static STATIC ${BOOST_LOCALE_SRC})
+	add_library(Boost::locale ALIAS boost_locale_static)
+	if(WIN32)
+		target_compile_definitions(boost_locale_static PRIVATE -DBOOST_LOCALE_WITH_WCONV)
+	else()
+		target_compile_definitions(boost_locale_static PRIVATE -DBOOST_LOCALE_WITH_ICONV)
+	endif()
+
+	if(APPLE)
+	target_link_libraries(boost_locale_static iconv)
+	endif()
+
 else()
-add_library(boost_locale_dll SHARED ${BOOST_LOCALE_SRC})
-add_library(Boost::locale ALIAS boost_locale_dll)
+	add_library(boost_locale_dll SHARED ${BOOST_LOCALE_SRC})
+	add_library(Boost::locale ALIAS boost_locale_dll)
+
+	if(WIN32)
+		target_compile_definitions(boost_locale_dll PRIVATE -DBOOST_LOCALE_WITH_WCONV)
+	else()
+		target_compile_definitions(boost_locale_dll PRIVATE -DBOOST_LOCALE_WITH_ICONV)
+	endif()
+
+	if(APPLE)
+	target_link_libraries(boost_locale_dll iconv)
+	endif()
 endif()
+
 
 if(Boost_USE_STATIC_LIBS)
 add_library(boost_date_time_static STATIC ${BOOST_DATE_TIME_SRC})
@@ -346,7 +367,6 @@ target_link_libraries(boost_atomic_static boost_system_static boost_header)
 target_link_libraries(boost_filesystem_static boost_system_static boost_header)
 target_link_libraries(boost_thread_static boost_system_static boost_header Threads::Threads)
 target_link_libraries(boost_context_static boost_header)
-target_link_libraries(boost_coroutine_static boost_context_static boost_system_static boost_header)
 target_link_libraries(boost_chrono_static boost_system_static boost_header)
 target_link_libraries(boost_locale_static boost_system_static boost_header)
 target_link_libraries(boost_date_time_static boost_system_static boost_chrono_static boost_header)
@@ -361,7 +381,6 @@ target_link_libraries(boost_atomic_dll boost_system_static boost_header)
 target_link_libraries(boost_filesystem_dll boost_system_static boost_header)
 target_link_libraries(boost_thread_dll boost_system_static boost_header Threads::Threads)
 target_link_libraries(boost_context_dll boost_header)
-target_link_libraries(boost_coroutine_dll boost_context_static boost_system_static boost_header)
 target_link_libraries(boost_chrono_dll boost_system_static boost_header)
 target_link_libraries(boost_locale_dll boost_system_static boost_header)
 target_link_libraries(boost_date_time_dll boost_system_static boost_chrono_static boost_header)
@@ -378,14 +397,21 @@ if(WIN32)
 		target_compile_definitions(boost_header INTERFACE -DBOOST_SP_USE_STD_ATOMIC -DBOOST_USE_WINDOWS_H)
 		set_property(SOURCE libs/locale/src/shared/message.cpp APPEND PROPERTY CMAKE_CXX_FLAGS "-O0")
 	endif()
+	if(Boost_USE_STATIC_LIBS)
+		target_compile_definitions(boost_context_static PUBLIC -DBOOST_USE_WINFIB)
+	endif()
+else()
+	if(Boost_USE_STATIC_LIBS)
+		target_compile_definitions(boost_context_static PRIVATE -DBOOST_USE_UCONTEXT)
+	endif()
 endif()
+
 
 set(BOOST_LIBRARIES
 	Boost::boost
 	Boost::atomic
 	Boost::context
 	Boost::system
-	Boost::coroutine
 	Boost::chrono
 	Boost::date_time
 	Boost::regex
@@ -404,7 +430,6 @@ set_target_properties(boost_atomic_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_filesystem_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_thread_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_context_static PROPERTIES FOLDER "third_party/boost")
-set_target_properties(boost_coroutine_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_chrono_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_locale_static PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_date_time_static PROPERTIES FOLDER "third_party/boost")
@@ -419,7 +444,6 @@ set_target_properties(boost_atomic_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_filesystem_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_thread_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_context_dll PROPERTIES FOLDER "third_party/boost")
-set_target_properties(boost_coroutine_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_chrono_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_locale_dll PROPERTIES FOLDER "third_party/boost")
 set_target_properties(boost_date_time_dll PROPERTIES FOLDER "third_party/boost")

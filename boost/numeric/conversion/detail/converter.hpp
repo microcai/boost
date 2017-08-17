@@ -1,4 +1,4 @@
-﻿//  (c) Copyright Fernando Luis Cacciola Carballal 2000-2004
+//  (c) Copyright Fernando Luis Cacciola Carballal 2000-2004
 //  Use, modification, and distribution is subject to the Boost Software
 //  License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -449,8 +449,11 @@ namespace boost { namespace numeric { namespace convdetail
   //
   // Trivial Converter : used when (cv-unqualified) T == (cv-unqualified)  S
   //
-  template<typename Traits>
-  struct trivial_converter_impl : public dummy_range_checker<Traits>
+  template<class Traits>
+  struct trivial_converter_impl : public std::unary_function<  BOOST_DEDUCED_TYPENAME Traits::argument_type
+                                                              ,BOOST_DEDUCED_TYPENAME Traits::result_type
+                                                            >
+                                 ,public dummy_range_checker<Traits>
   {
     typedef Traits traits ;
 
@@ -468,11 +471,14 @@ namespace boost { namespace numeric { namespace convdetail
   // Rounding Converter : used for float to integral conversions.
   //
   template<class Traits,class RangeChecker,class RawConverter,class Float2IntRounder>
-  struct rounding_converter : public RangeChecker
+  struct rounding_converter : public std::unary_function<  BOOST_DEDUCED_TYPENAME Traits::argument_type
+                                                          ,BOOST_DEDUCED_TYPENAME Traits::result_type
+                                                        >
+                             ,public RangeChecker
                              ,public Float2IntRounder
                              ,public RawConverter
   {
-    typedef RangeChecker     RangeCheckerBase;
+    typedef RangeChecker     RangeCheckerBase ;
     typedef Float2IntRounder Float2IntRounderBase ;
     typedef RawConverter     RawConverterBase ;
 
@@ -495,7 +501,10 @@ namespace boost { namespace numeric { namespace convdetail
   // Non-Rounding Converter : used for all other conversions.
   //
   template<class Traits,class RangeChecker,class RawConverter>
-  struct non_rounding_converter : public RangeChecker
+  struct non_rounding_converter : public std::unary_function< BOOST_DEDUCED_TYPENAME Traits::argument_type
+                                                             ,BOOST_DEDUCED_TYPENAME Traits::result_type
+                                                           >
+                                 ,public RangeChecker
                                  ,public RawConverter
   {
     typedef RangeChecker RangeCheckerBase ;
@@ -503,7 +512,7 @@ namespace boost { namespace numeric { namespace convdetail
 
     typedef Traits traits ;
 
-    typedef typename Traits::source_type   source_type;
+    typedef typename Traits::source_type   source_type   ;
     typedef typename Traits::argument_type argument_type ;
     typedef typename Traits::result_type   result_type   ;
 

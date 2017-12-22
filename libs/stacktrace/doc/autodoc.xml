@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<library-reference id="reference"><title>Reference</title><header name="boost/stacktrace.hpp">
+<library-reference id="stacktrace.reference"><title>Reference</title><header name="boost/stacktrace.hpp">
 </header>
 <header name="boost/stacktrace/stacktrace.hpp">
 <namespace name="boost">
@@ -54,25 +54,10 @@
 <method name="from_dump" specifiers="static"><type><classname>basic_stacktrace</classname></type><template>
           <template-type-parameter name="Char"/>
           <template-type-parameter name="Trait"/>
-        </template><parameter name="in"><paramtype>std::basic_istream&lt; Char, Trait &gt; &amp;</paramtype></parameter><parameter name="a"><paramtype>const allocator_type &amp;</paramtype><default>allocator_type()</default></parameter><description><para>Constructs stacktrace from basic_istreamable that references the dumped stacktrace.</para><para><emphasis role="bold">Complexity:</emphasis> O(N) </para></description></method>
-<method name="from_dump" specifiers="static"><type><classname>basic_stacktrace</classname></type><parameter name="begin"><paramtype>const void *</paramtype></parameter><parameter name="size"><paramtype>std::size_t</paramtype></parameter><parameter name="a"><paramtype>const allocator_type &amp;</paramtype><default>allocator_type()</default></parameter><description><para>Constructs stacktrace from raw memory dump.</para><para><emphasis role="bold">Complexity:</emphasis> O(size) in worst case </para></description></method>
+        </template><parameter name="in"><paramtype>std::basic_istream&lt; Char, Trait &gt; &amp;</paramtype></parameter><parameter name="a"><paramtype>const allocator_type &amp;</paramtype><default>allocator_type()</default></parameter><description><para>Constructs stacktrace from basic_istreamable that references the dumped stacktrace. Terminating zero frame is discarded.</para><para><emphasis role="bold">Complexity:</emphasis> O(N) </para></description></method>
+<method name="from_dump" specifiers="static"><type><classname>basic_stacktrace</classname></type><parameter name="begin"><paramtype>const void *</paramtype></parameter><parameter name="buffer_size_in_bytes"><paramtype>std::size_t</paramtype></parameter><parameter name="a"><paramtype>const allocator_type &amp;</paramtype><default>allocator_type()</default></parameter><description><para>Constructs stacktrace from raw memory dump. Terminating zero frame is discarded.</para><para><emphasis role="bold">Complexity:</emphasis> O(size) in worst case </para></description></method>
 </method-group>
 </class><typedef name="stacktrace"><purpose>This is the typedef to use unless you'd like to provide a specific allocator to <classname alt="boost::stacktrace::basic_stacktrace">boost::stacktrace::basic_stacktrace</classname>. </purpose><type><classname>basic_stacktrace</classname></type></typedef>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <function name="operator&lt;"><type>bool</type><template>
           <template-type-parameter name="Allocator1"/>
           <template-type-parameter name="Allocator2"/>
@@ -105,6 +90,21 @@
           <template-type-parameter name="TraitsT"/>
           <template-type-parameter name="Allocator"/>
         </template><parameter name="os"><paramtype>std::basic_ostream&lt; CharT, TraitsT &gt; &amp;</paramtype></parameter><parameter name="bt"><paramtype>const <classname>basic_stacktrace</classname>&lt; Allocator &gt; &amp;</paramtype></parameter><purpose>Outputs stacktrace in a human readable format to output stream; unsafe to use in async handlers. </purpose></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </namespace>
 </namespace>
 </header>
@@ -170,6 +170,20 @@
 <header name="boost/stacktrace/frame.hpp">
 <namespace name="boost">
 <namespace name="stacktrace">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <function name="operator&lt;"><type>constexpr bool</type><parameter name="lhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter><parameter name="rhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter><purpose>Comparison operators that provide platform dependant ordering and have O(1) complexity; are Async-Handler-Safe. </purpose></function>
 <function name="operator&gt;"><type>constexpr bool</type><parameter name="lhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter><parameter name="rhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter></function>
 <function name="operator&lt;="><type>constexpr bool</type><parameter name="lhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter><parameter name="rhs"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter></function>
@@ -182,20 +196,6 @@
           <template-type-parameter name="CharT"/>
           <template-type-parameter name="TraitsT"/>
         </template><parameter name="os"><paramtype>std::basic_ostream&lt; CharT, TraitsT &gt; &amp;</paramtype></parameter><parameter name="f"><paramtype>const <classname>frame</classname> &amp;</paramtype></parameter><purpose>Outputs <classname alt="boost::stacktrace::frame">stacktrace::frame</classname> in a human readable format to output stream; unsafe to use in async handlers. </purpose></function>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </namespace>
 </namespace>
 </header>
@@ -210,25 +210,25 @@
 
 
 
-
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="memory"><paramtype>void *</paramtype><description><para>Preallocated buffer to store current function call sequence into.</para></description></parameter><parameter name="size"><paramtype>std::size_t</paramtype><description><para>Size of the preallocated buffer. </para></description></parameter><purpose>Stores current function call sequence into the memory. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="skip"><paramtype>std::size_t</paramtype><description><para>How many top calls to skip and do not store.</para></description></parameter><parameter name="memory"><paramtype>void *</paramtype><description><para>Preallocated buffer to store current function call sequence into.</para></description></parameter><parameter name="size"><paramtype>std::size_t</paramtype><description><para>Size of the preallocated buffer. </para></description></parameter><purpose>Stores current function call sequence into the memory. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="file"><paramtype>const char *</paramtype><description><para>File to store current function call sequence. </para></description></parameter><purpose>Opens a file and rewrites its content with current function call sequence. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="skip"><paramtype>std::size_t</paramtype><description><para>How many top calls to skip and do not store.</para></description></parameter><parameter name="max_depth"><paramtype>std::size_t</paramtype><description><para>Max call sequence depth to collect.</para></description></parameter><parameter name="file"><paramtype>const char *</paramtype><description><para>File to store current function call sequence. </para></description></parameter><purpose>Opens a file and rewrites its content with current function call sequence. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="fd"><paramtype>platform_specific_descriptor</paramtype></parameter><purpose>Writes into the provided file descriptor the current function call sequence. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
 <function name="safe_dump_to"><type>std::size_t</type><parameter name="skip"><paramtype>std::size_t</paramtype><description><para>How many top calls to skip and do not store.</para></description></parameter><parameter name="max_depth"><paramtype>std::size_t</paramtype><description><para>Max call sequence depth to collect.</para></description></parameter><parameter name="fd"><paramtype>platform_specific_descriptor</paramtype></parameter><purpose>Writes into the provided file descriptor the current function call sequence. </purpose><description><para><emphasis role="bold">Complexity:</emphasis> O(N) where N is call sequence length, O(1) if BOOST_STACKTRACE_USE_NOOP is defined.</para><para><emphasis role="bold">Async-Handler-Safety</emphasis>: Safe.</para><para>
 
-</para></description><returns><para>Stored call sequence depth.</para></returns></function>
+</para></description><returns><para>Stored call sequence depth including terminating zero frame.</para></returns></function>
+
 
 
 

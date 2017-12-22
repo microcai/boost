@@ -199,49 +199,37 @@ int test_inplace() {
     const bool is_noop = !boost::stacktrace::stacktrace();
 
     {
-        boost::stacktrace::safe_dump_to("./backtrace2.dump"); 
+        // This is very dependent on compiler and link flags. No sane way to make it work, because:
+        // * BOOST_NOINLINE could be ignored by MSVC compiler if link-time optimization is enabled.
+        // * BOOST_FORCEINLINE could be ignored by GCC depending on the std::vector default constructor length.
+        const std::size_t frames_ss1 = boost::stacktrace::safe_dump_to("./backtrace2.dump");
         boost::stacktrace::stacktrace ss2;
         std::ifstream ifs("./backtrace2.dump");
         boost::stacktrace::stacktrace ss1 = boost::stacktrace::stacktrace::from_dump(ifs);
         ifs.close();
         boost::filesystem::remove("./backtrace2.dump");
 
-        if (ss1.size() != ss2.size()) {
-            std::cerr << "Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
-            return 51;
+        if (ss1.size() + 1 != frames_ss1 || ss2.size() != ss1.size()) {
+            std::cerr << "51: Stacktraces differ. Dumped size == " << frames_ss1 << ".\n" << ss1 << "\n vs \n" << ss2 << '\n';
+        } else if (ss1.size() > 1 && ss1[1].name() != ss2[1].name()) {
+            std::cerr << "52: Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
         }
-
-#if !defined(BOOST_MSVC) && !defined(BOOST_STACKTRACE_USE_WINDBG)
-        // This is very dependent on compiler and link flags. No sane way to make it work, because:
-        // * BOOST_NOINLINE could be ignored by MSVC compiler if link-time optimization is enabled.
-        // * BOOST_FORCEINLINE could be ignored by GCC depending on the std::vector default constructor length.
-        if (ss1.size() > 1 && ss1[1].name() != ss2[1].name()) {
-            std::cerr << "Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
-            return 52;
-        }
-#endif
     }
 
     {
-        void* data[1024];
-        boost::stacktrace::safe_dump_to(data, sizeof(data));
-        boost::stacktrace::stacktrace ss2;
-        boost::stacktrace::stacktrace ss1 = boost::stacktrace::stacktrace::from_dump(data, sizeof(data));
-
-        if (ss1.size() != ss2.size()) {
-            std::cerr << "Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
-            return 53;
-        }
-
-#if !defined(BOOST_MSVC) && !defined(BOOST_STACKTRACE_USE_WINDBG)
         // This is very dependent on compiler and link flags. No sane way to make it work, because:
         // * BOOST_NOINLINE could be ignored by MSVC compiler if link-time optimization is enabled.
         // * BOOST_FORCEINLINE could be ignored by GCC depending on the std::vector default constructor length.
-        if (ss1.size() > 1 && ss1[1].name() != ss2[1].name()) {
-            std::cerr << "Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
-            return 54;
+        void* data[1024];
+        const std::size_t frames_ss1 = boost::stacktrace::safe_dump_to(data, sizeof(data));
+        boost::stacktrace::stacktrace ss2;
+        boost::stacktrace::stacktrace ss1 = boost::stacktrace::stacktrace::from_dump(data, sizeof(data));
+
+        if (ss1.size() + 1 != frames_ss1 || ss1.size() != ss2.size()) {
+            std::cerr << "53: Stacktraces differ. Dumped size == " << frames_ss1 << ".\n" << ss1 << "\n vs \n" << ss2 << '\n';
+        } else if (ss1.size() > 1 && ss1[1].name() != ss2[1].name()) {
+            std::cerr << "54: Stacktraces differ:\n" << ss1 << "\n vs \n" << ss2 << '\n';
         }
-#endif
     }
 
     {
@@ -308,8 +296,12 @@ int main(int argc, const char* argv[]) {
         // We are copying files to make sure that stacktrace printing works independently from executable name
         copy_and_run(argv[0], '1', true);
         copy_and_run(argv[0], '2', false);
+
+#ifndef BOOST_WINDOWS
+        // There are some issues with async-safety of shared mmory writes on Windows.
         copy_and_run(argv[0], '3', true);
         copy_and_run(argv[0], '4', false);
+#endif
 
         return test_inplace();
     }

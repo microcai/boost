@@ -33,7 +33,7 @@ to your project CMakeLists.txt
 then use
 
 ```
-target_link_libraries("your target" ${BOOST_LIBRARIES} )
+target_link_libraries("your target" Boost::thread Boost::filesystem ... etc )
 ```
 
 下面是照顾不会英语的人的
@@ -64,7 +64,7 @@ endif()
 接下来就可以使用了。用如下的命令添加链接就可以了。头文件路径会自动加入。
 
 ```
-target_link_libraries("your target" ${BOOST_LIBRARIES} )
+target_link_libraries("your target" Boost::thread Boost::filesystem 等等 )
 ```
 
 

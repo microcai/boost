@@ -22,7 +22,7 @@ then add
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 
-find_package(Boost 1.66 COMPONENTS thread system filesystem program_options random atomic chrono)
+find_package(Boost 1.55 COMPONENTS thread system filesystem program_options random atomic chrono)
 if (NOT Boost_FOUND)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/boost)
 endif()

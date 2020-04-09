@@ -2,7 +2,7 @@
 // spawn.hpp
 // ~~~~~~~~~
 //
-// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2019 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,8 +16,7 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
-#include <boost/version.hpp>
-#include <boost/coroutine2/all.hpp>
+#include <boost/coroutine/all.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detail/memory.hpp>
 #include <boost/asio/detail/type_traits.hpp>
@@ -63,8 +62,10 @@ public:
    */
 #if defined(GENERATING_DOCUMENTATION)
   typedef implementation_defined callee_type;
+#elif defined(BOOST_COROUTINES_UNIDIRECT) || defined(BOOST_COROUTINES_V2)
+  typedef boost::coroutines::push_coroutine<void> callee_type;
 #else
-  typedef boost::coroutines2::asymmetric_coroutine<void>::push_type callee_type;
+  typedef boost::coroutines::coroutine<void()> callee_type;
 #endif
   
   /// The coroutine caller type, used by the implementation.
@@ -76,8 +77,10 @@ public:
    */
 #if defined(GENERATING_DOCUMENTATION)
   typedef implementation_defined caller_type;
+#elif defined(BOOST_COROUTINES_UNIDIRECT) || defined(BOOST_COROUTINES_V2)
+  typedef boost::coroutines::pull_coroutine<void> caller_type;
 #else
-  typedef boost::coroutines2::asymmetric_coroutine<void>::pull_type caller_type;
+  typedef boost::coroutines::coroutine<void()>::caller_type caller_type;
 #endif
 
   /// Construct a yield context to represent the specified coroutine.
@@ -199,7 +202,9 @@ typedef basic_yield_context<
  * @param attributes Boost.Coroutine attributes used to customise the coroutine.
  */
 template <typename Function>
-void spawn(BOOST_ASIO_MOVE_ARG(Function) function);
+void spawn(BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes());
 
 /// Start a new stackful coroutine, calling the specified handler when it
 /// completes.
@@ -219,6 +224,8 @@ void spawn(BOOST_ASIO_MOVE_ARG(Function) function);
 template <typename Handler, typename Function>
 void spawn(BOOST_ASIO_MOVE_ARG(Handler) handler,
     BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes(),
     typename enable_if<!is_executor<typename decay<Handler>::type>::value &&
       !is_convertible<Handler&, execution_context&>::value>::type* = 0);
 
@@ -239,7 +246,9 @@ void spawn(BOOST_ASIO_MOVE_ARG(Handler) handler,
  */
 template <typename Handler, typename Function>
 void spawn(basic_yield_context<Handler> ctx,
-    BOOST_ASIO_MOVE_ARG(Function) function);
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes());
 
 /// Start a new stackful coroutine that executes on a given executor.
 /**
@@ -256,6 +265,8 @@ void spawn(basic_yield_context<Handler> ctx,
 template <typename Function, typename Executor>
 void spawn(const Executor& ex,
     BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes(),
     typename enable_if<is_executor<Executor>::value>::type* = 0);
 
 /// Start a new stackful coroutine that executes on a given strand.
@@ -271,7 +282,9 @@ void spawn(const Executor& ex,
  */
 template <typename Function, typename Executor>
 void spawn(const strand<Executor>& ex,
-    BOOST_ASIO_MOVE_ARG(Function) function);
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes());
 
 /// Start a new stackful coroutine that executes in the context of a strand.
 /**
@@ -288,7 +301,9 @@ void spawn(const strand<Executor>& ex,
  */
 template <typename Function>
 void spawn(const boost::asio::io_context::strand& s,
-    BOOST_ASIO_MOVE_ARG(Function) function);
+    BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes());
 
 /// Start a new stackful coroutine that executes on a given execution context.
 /**
@@ -306,6 +321,8 @@ void spawn(const boost::asio::io_context::strand& s,
 template <typename Function, typename ExecutionContext>
 void spawn(ExecutionContext& ctx,
     BOOST_ASIO_MOVE_ARG(Function) function,
+    const boost::coroutines::attributes& attributes
+      = boost::coroutines::attributes(),
     typename enable_if<is_convertible<
       ExecutionContext&, execution_context&>::value>::type* = 0);
 

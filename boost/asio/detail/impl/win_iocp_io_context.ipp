@@ -19,7 +19,6 @@
 
 #if defined(BOOST_ASIO_HAS_IOCP)
 
-#include <winnt.h>
 #include <boost/asio/error.hpp>
 #include <boost/asio/detail/cstdint.hpp>
 #include <boost/asio/detail/handler_alloc_helpers.hpp>
@@ -519,7 +518,7 @@ DWORD win_iocp_io_context::get_gqcs_timeout()
   osvi.dwOSVersionInfoSize = sizeof(osvi);
   osvi.dwMajorVersion = 6ul;
 
-  const uint64_t condition_mask = VerSetConditionMask(
+  const uint64_t condition_mask = ::VerSetConditionMask(
       0, VER_MAJORVERSION, VER_GREATER_EQUAL);
 
   if (!!::VerifyVersionInfo(&osvi, VER_MAJORVERSION, condition_mask))
